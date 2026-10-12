@@ -28,89 +28,648 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Fall 2026 Homework 2 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: Travis Le</div>
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/fa26">cs184.eecs.berkeley.edu/fa26</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw2-i-meshed-up-we-gotta-go-bald-writeup">Website</a>
 
 		<br>
 		
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/fa26">cs184.eecs.berkeley.edu/fa26</a>
-
-		<figure>
-			<img src="assets/teapot.png" alt="Teapot" style="width:50%"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/hw2-i-meshed-up-we-gotta-go-bald-writeup.git">GitHub</a>
 
 		<!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
 		-->
 
 		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+
+		<p>In this homework, I implemented the logic behind building Bezier curves and surfaces to make 3D triangle meshes.
+			I've also implemented the logic for basic mesh operations such as flipping and splitting edges, which led to
+			the implementation of loop subdivision. For extra credit, I've also created a new operation to split faces
+			for the purpose of implementing sqrt-3 subdivision. By far the most interesting thing about working on this assignment
+			was the use of the half-edge data structure to traverse the entire mesh. After messing around a bit, I
+			figured out a pattern to ensure that the mesh operations correctly assigned pointers which involved
+			making a diagram, obtaining all the elements, creating new elements, and reassigning them last. It was
+			also interesting seeing the different forms of subdivisions and how the outcomes of each were different.
+		</p>
 
 		<h2>Section I: Bezier Curves and Surfaces</h2>
 
 		<h3>Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+		<h4>de Casteljau Algorithm</h4>
+
+		<p>de Casteljau's algorithm is used to evaluate a Bezier curve of degree \(n\), defined by \(n+1\) control points.
+			Through recursive linear interpolation between each neighboring pair control points, it eventually finds a single point
+			on the Bezier curve. The interpolation is controlled by a parameter \(t\) which ranges from \(0\) to \(1\).
+			Performing the algorithm over the range of \(t\) gets you what is essentially all points on the Bezier curve,
+			basically drawing out the curve.
+		</p>
+
+		<h4>Implementation of de Casteljau</h4>
+
+		<p>To implement the algorithm, I only needed to implement a single recursive step of it with <code>BezierCurve::evaluateStep</code>.
+			Given the points and the parameter \(t\), I simply iterate through the points pairwise using a for loop.
+			On each pair of points \(a\) and \(b\), I calculate the interpolated point using linear interpolation:
+			\((1-t) * a + t * b\). I add this interpolated point to a vector <code>intermediatePoints</code> which
+			will eventually hold all the interpolated points calculated between each pair of neighbors. This concludes
+			a single step of the algorithm, so I return <code>intermediatePoints</code>.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<b>Screenshots of bzc/curvecustom.bzc performing de Casteljau's algorithm</b>
+				<br>
+			  <tr>
+				<td>
+					<img src="assets/part1/curve1.png" width="400px"/>
+				</td>
+				<td>
+					<img src="assets/part1/curve2.png" width="400px"/>
+				</td>
+			  </tr>
+			  <tr>
+				<td>
+					<img src="assets/part1/curve3.png" width="400px"/>
+				</td>
+				<td>
+					<img src="assets/part1/curve4.png" width="400px"/>
+				</td>
+			  </tr>
+			  <tr>
+				<td>
+					<img src="assets/part1/curve5.png" width="400px"/>
+				</td>
+				<td>
+					<img src="assets/part1/curve6.png" width="400px"/>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="assets/teapot.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="assets/teapot.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="assets/teapot.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="assets/teapot.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="assets/part1/curvediff.png" width="800px"/>
+				  <figcaption>Different curve with adjusted control points and different parameter \(t\)</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
 
 		<h3>Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		
+		<h4>de Casteljau and Bezier Surfaces</h4>
+
+		<p>Bezier surfaces are defined by a grid of \(n \times n\) control points and parameters \(u\)
+			and \(v\). An alternative way to view this is \(n\) Bezier curves, each represented by one of
+			the <i>rows</i> of control points with parameter \(u\). Since this results in \(n\) points
+			when using de Casteljau on each curve, we can use them as control points to represent another Bezier curve with
+			parameter \(v\) to find a single point on the overall Bezier surface at parameters \(u\) and \(v\).
+		</p>
+
+		<h4>Implementation for Bezier Surfaces</h4>
+
+		<p>For implementation, it involved modifying three functions, <code>BezierPatch::evaluateStep</code>, 
+			<code>BezierPatch::evaluate1D</code>, and <code>BezierPatch::evaluate</code>. The first function,
+			<code>BezierPatch::evaluateStep</code>, works exactly the same as the previous part with the only difference
+			being the use of <code>Vector3D</code> instead of <code>Vector2D</code>.
+		</p>
+
+		<p>For <code>BezierPatch::evaluate1D</code>, it is simply a matter of performing all steps of the
+			de Casteljau algorithm. The algorithm finishes once it finds a single point so I simply used
+			a while loop to keep calling <code>BezierPatch::evaluateStep</code>, checking the size of the vector 
+			returned. If it is not one, I keep calling the function on the returned points until it
+			does return with only one intermediate point.
+		</p>
+
+		<p>Lastly, to tie it all together, the implementation of <code>BezierPatch::evaluate</code> involves
+			iterating through each row of control points, calling <code>BezierPatch::evaluate1D</code> on each row
+			with parameter \(u\). I save the returned points in a vector so that after all rows are iterated through,
+			I have the control points needed to perform one final call to <code>BezierPatch::evaluate1D</code>, passing in 
+			those points and parameter \(v\) and returning whatever point is returned in this call.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part2/teapot_bez.png" width="800px"/>
+				  <figcaption>bez/teapot.bez</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 		<h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
 		<h3>Part 3: Area-weighted vertex normals</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+		<h4>Implementation of Area-Weighted Vertex Normals</h4>
+
+		<p>To implement <code>Vertex::normal</code>, I first obtained the half-edge of the vertex we are at.
+			I also created another variable <code>sum</code> to hold the summation of all the area-weighted normals 
+			of the surrounding faces.
+		</p>
+
+		<p>Using the half-edge and a do-while loop, we can iterate through all surrounding
+			faces by traversing from the half-edge (pointing away from the vertex) to its twin and then the next half-edge.
+			This reaches the next half-edge pointing away from the vertex which is also in the next face. We can continue this
+			loop until we reach the original half-edge we started with.
+		</p>
+
+		<p>For each half-edge (pointing from the vertex), we check that it is not in the boundary (if so we just move on).
+			Next, we obtain the three vertices of the face by traversing to the next half-edge and obtaining its vertex.
+		</p>
+
+		<p>Now that we have all three vertices of the face (\(v1, v2, v3\)), we can calculate the normal and area. Let \(v1\) 
+			be the vertex we are currently calculating the area-weighted vertex normal for. The most important
+			thing to calculate is \((v2 - v1) \times (v3 - v1)\). This is simply the cross product of the two vectors
+			pointing from our vertex to the other two vertices in the face. This is useful because it represents
+			the unnormalized normal (not unit length) and its magnitude represents double the area of the face.
+			To get area, I simply get the norm (magnitude or Euclidean length) and divide by two. If we want
+			to make the normal unit length, we simply call the member function <code>unit()</code>.
+			With this, we can multiply the area by the unit length normal to get the area-weighted normal of the face which 
+			we can add to <code>sum</code>.
+		</p>
+
+		<p>After iterating through each face and summing up their area-weighted normals in <code>sum</code>,
+			we can simply normalize it by calling <code>unit()</code> (since it is a <code>Vector3D</code>)
+			to obtain the result we return.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part3/teapot_flat.png" width="400px"/>
+				  <figcaption>dae/teapot.dae with flat shading</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part3/teapot_smooth.png" width="400px"/>
+				  <figcaption>dae/teapot.dae with Phong shading</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 		<h3>Part 4: Edge flip</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+		<h4>Implementation of Edge Flip</h4>
+
+		<p>The overall implementation of the edge flip operation relies on the principle of
+			updating everything, even if it hasn't changed. As such, I used the half-edge to
+			obtain every nearly single element nearby. Drawing a diagram also helped reveal
+			which elements I needed to possibly worry about. In total, for the two triangles
+			connected to the half-edge (specifically the edge of the half-edge), I updated
+			6 half-edges, 2 faces, 4 vertices, and 1 edge. I knew for certain that the outer edges
+			of both triangles would not need to be modified as their associated half-edges never move to
+			different vertices.
+		</p>
+
+		<p>My overall implementation is first checking that the edge we want to flip isn't in the boundary (otherwise just return
+			an empty <code>EdgeIter()</code>). Then, I gather all the elements I plan to modify (as I listed above). Lastly, 
+			I update each element by category (faces, half-edges, etc.). For half-edges, I update with <code>setNeighbors</code>
+			while for any other kind of element I update <code>halfedge()</code> since that's the only thing that can be changed
+			in an edge flip. Updating category by category makes it easier to track any missing elements I forgot to account for.
+			After updating, I simply return the same <code>EdgeIter</code> that was passed in, since my updates guarantee
+			this iterator points to the flipped edge.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part4/teapot_b4_flip.png" width="400px"/>
+				  <figcaption>dae/teapot.dae before flips</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part4/teapot_af_flip.png" width="400px"/>
+				  <figcaption>dae/teapot.dae after flips</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 		<h3>Part 5: Edge split</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+		<h4>Implementation of Edge Split</h4>
+
+		<p>Implementing edge split builds off the same principles I used to implement edge flips. I drew a diagram before
+			starting to observe how the edge split modifies the triangles.
+			Then, I gathered all existing elements to be modified which ended up being the same elements as the edge flip.
+			Similarly I check if the edge is a boundary. If it isn't, I then create all new elements which ended up
+			being 2 faces, 3 edges, 6 half-edges, and 1 vertex. I proceeded to update all the elements, both existing and new,
+			by category. The same rule applies where I only need to modify <code>halfedge()</code> unless the element is a half-edge,
+			in which case I use <code>setNeighbors</code>. The only exception is the new vertex, whose position is updated to be the
+			center of the edge (averaging the positions of the edge's two vertices). I also return this vertex's iterator.
+		</p>
+
+		<p>Overall, the work took more time than implementing edge flip since there are more elements to update. I actually
+			didn't experience as many debugging issues since by this point I figured out the process to update elements
+			in a way that basically guarantees it's correct.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part5/beetle_b4_split.png" width="400px"/>
+				  <figcaption>dae/beetle.dae before splits</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part5/beetle_af_split.png" width="400px"/>
+				  <figcaption>dae/beetle.dae after splits</figcaption>
+				</td>
+			  </tr>
+			  <tr><td><br></td></tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part5/beetle_b4_sf.png" width="400px"/>
+				  <figcaption>dae/beetle.dae before splits + flips</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part5/beetle_af_sf.png" width="400px"/>
+				  <figcaption>dae/beetle.dae after splits + flips</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		
+		<h4>Extra Credit: Boundary Edges</h4>
+
+		<p>Instead of ignoring the operation on boundary edges, I also check if one of two faces is not a boundary. While this may
+			be redundant, it gives a bit of guarantee that I can split one of the faces. If there happens to be a boundary edge
+			between two boundary faces, then I return the empty <code>VertexIter()</code>. Moving forward, from the two half-edges
+			associated with the edge we are splitting, I locate the half-edge that is inside the non-boundary face using a ternary operator.
+			From there, I follow the same process of gathering elements, creating new elements, and updating categorically.
+			The vertex is updated the same, being put at the center of the edge and updating is mostly the same as it is in the original case, but
+			just happening on one of the faces.
+		</p>
+
+		<p>This case does bring a special challenge involving the boundary face we are not splitting. Since we split the edge,
+			we also need to update and add half-edges in the boundary face to make sure it's correct. In a nutshell,
+			this is simply done by saving the boundary half-edge \(be0\) (the other half-edge from the edge we split) and its next half-edge \(be0\_next\). I create a new half-edge
+			\(be1\) and modify it along with \(be0\) so that \(be1\) is preceded by \(be0\) and succeeded by \(be0\_next\). Other stuff
+			such as twins, vertices, edges, and faces can also be updated using the elements we've saved/created.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part5/beetle_b4_bs.png" width="400px"/>
+				  <figcaption>dae/beetle.dae before boundary splits</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part5/beetle_af_bs.png" width="400px"/>
+				  <figcaption>dae/beetle.dae after boundary splits</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 		<h3>Part 6: Loop subdivision for mesh upsampling</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-		<h2>(Optional) Section III: Potential Extra Credit - Art Competition: Model something Creative</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h4>Implementation of Loop Subdivision</h4>
 
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
+		<p>To implement Loop subdivision, I split the whole process into five sections:
+			old vertices, new vertices, split, flip, and set. The first two sections, old and new vertices, involve
+			calculating new vertex positions after subdivision and storing it in each vertex's <code>newPosition</code>
+			field. The third and fourth section, split and flip, involve using mesh operations to achieve the subdivision.
+			The fifth section, set, simply sets every vertex's position to their <code>newPosition</code>.
+		</p>
+
+		<p>To handle old vertices, I simply iterate through all vertices in the mesh. If it is not a boundary vertex,
+			I can calculate its new position with the equation \((1 - nu)v + uk\), where \(n =\) the degree of
+			the vertex, \(u = \frac{3}{8n}\) if \(n \neq 3\), else \(u = \frac{3}{16}\), \(v =\) the vertex position, and \(k =\) the sum of all
+			the positions of neighboring vertices. I chose \(u\) using a ternary operator on the condition \(n == 3\), picking the
+			appropriate value depending on the outcome. To obtain \(k\), we simply use the same half-edge iteration described in
+			Part 3 to reach every half-edge that comes from the vertex which in turn lets us also reach every half-edge
+			pointing towards the vertex through twins. The vertices of these twins are therefore neighboring vertices,
+			which we can sum up the position of to obtain \(k\) and fully compute the new position for every old vertex in the mesh.
+			This gets stored in each vertex's <code>newPosition</code> field.
+			Lastly, we mark all these vertices as old by setting their <code>isNew</code> field to <code>false</code>.
+		</p>
+
+		<p>To handle new vertices, I iterate through all edges in the mesh. If it is not a boundary edge, I can use the equation
+			\(\frac{3}{8}(v0 + v1) + \frac{1}{8}(v2 + v3)\). \(v0\) and \(v1\) are the vertices of the edge, while \(v2\) and \(v3\) are
+			the "opposite" vertices, meaning that they are the vertices connected to the two faces of the triangles 
+			that are not connected to their shared edge, a.k.a. the edge we'd be finding the vertex's position of after subdivision.
+			All these vertices can simply be found through half-edge traversal, more specifically through the edge's half-edges
+			which each can traverse around two faces. After computing with the formula, we store it in the edge's 
+			<code>newPosition</code> field.
+		</p>
+
+		<p>Splitting is relatively simple. For Loop subdivision, we want to split edges in the original mesh, which means
+			all edges whose two vertices are not new, a.k.a. when <code>isNew</code> is <code>false</code>.
+			I iterate through all edges in the mesh (safely using a while loop and storing the next edge)
+			and simply obtain the vertices of each edge. If both are old, we split the edge and set this new vertex's fields.
+			The <code>newPosition</code> field will match the <code>newPosition</code> field of the edge and <code>isNew</code>
+			is set to <code>true</code>. Since we also create new edges, we need to mark them as being old or new for flipping later.
+			I chose to modify the <code>splitEdge</code> method to set the fields for the edges during the updates.
+		</p>
+
+		<p>Flipping is also simple as we just need to check if the edge we flip is new and if its vertices are an old and new one.
+			Much like splitting, I iterate through all edges in the mesh (safely) and check if the edge's <code>isNew</code> field
+			is <code>true</code>. To check if both vertices are a new and old vertex respectively, we can simply
+			compare their <code>isNew</code> fields using <code>!=</code>, which returns <code>true</code> if both are different.
+			If the conditions pass, we flip the edge and do the same checks for all edges.
+		</p>
+
+		<p>Setting the positions is the easiest section since all I needed to do was iterate through every vertex
+			and set its <code>position</code> to <code>newPosition</code>.
+		</p>
+		
+		<h4>Mesh Behavior Post-Loop</h4>
+
+		<p>I noticed that sharp corners and edges of a mesh are rounded out after subdivision. It seems, however,
+			that by splitting faces near these edges and corners, it adds more faces closer to them which
+			helps make the overall averaging in that area stay close to what it was before. The screenshots below
+			help demonstrate this effect.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_nc_b4.png" width="400px"/>
+				  <figcaption>dae/cube.dae with no changes before subdivision</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_nc_af.png" width="400px"/>
+				  <figcaption>dae/cube.dae with no changes after subdivision</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_s_b4.png" width="400px"/>
+				  <figcaption>dae/cube.dae with pre-splits before subdivision</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_s_af.png" width="400px"/>
+				  <figcaption>dae/cube.dae with pre-splits after subdivision</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<p>Another interesting observation with the cube is the fact that it becomes asymmetrical
+			after enough Loop subdivisions. I theorize that this effect comes from the fact that each vertex
+			of the cube is connected to its neighbors differently. For example, some vertices
+			connect diagonally to the vertex in the opposite corner of the same side of the cube while
+			the rest do not. As a result, the new positions of these vertices vary when subdividing, leading
+			to asymmetry.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<b>Screenshots of unaltered dae/cube.dae through multiple Loop subdivisions</b>
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_n1.png" width="400px"/>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_n2.png" width="400px"/>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_n3.png" width="400px"/>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<p>I found that splitting every diagonal edge of the cube so that there is an X pattern
+			on each side prevents this since it ensures each vertex is connected to all neighbors,
+			including its diagonal neighbor. Since the cube is symmetric, this means every vertex will
+			have the same "weighing" which makes the cube subdivide symmtrically.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<b>Screenshots of altered dae/cube.dae through multiple Loop subdivisions</b>
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_a1.png" width="400px"/>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_a2.png" width="400px"/>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part6/cube_a3.png" width="400px"/>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<h4>Extra Credit: Handling Boundaries</h4>
+
+		<p>In order to make the Loop subdivision work with boundaries, I added extra logic to handle boundary cases in 
+			the old and new vertex sections. The other sections, split, flip, and set, either do nothing with boundary cases
+			or already handle it in the case of split. For the formulas I use in computing <code>newPosition</code> for these
+			boundary cases, I found them through this page:
+			<br>
+			<a href="https://graphics.stanford.edu/~mdfisher/subdivision.html">graphics.stanford.edu/~mdfisher/subdivision.html</a>
+		</p>
+
+		<p>To account for old boundary vertices, we need to use the alternative formula
+			\(\frac{3}{4}v + \frac{1}{8}(v0 + v1)\), where \(v = \) the vertex we are examining and
+			\(v0, v1\) are neighboring boundary vertices. The trickiest part of this case is finding the neighboring
+			boundary vertices. To find them, I iterated with half-edges, starting from the half-edge of \(v\), until I reached a half-edge that is a boundary.
+			In this particular case, there only exists one half-edge like this that comes from \(v\).
+			I can use this as a point of reference to traverse and obtain \(v0, v1\).
+			Once we find all the vertices we need, I compute the <code>newPosition</code> for boundary vertex \(v\).
+		</p>
+
+		<p>For new vertices, in the case that our edge is on the boundary, we can simply just
+			use the edge's midpoint as the <code>newPosition</code> for the vertex. This is just the average between
+			the two vertices of the edge, something that we've done in Part 5.
+		</p>
+
+		<p>Now that we've made sure boundary vertices will have a <code>newPosition</code>, Loop subdivision
+			can support meshes with boundaries.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<b>Screenshots of dae/beetle.dae through multiple Loop subdivisions</b>
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/beetle_b4.png" width="800px"/>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/beetle_af1.png" width="800px"/>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/beetle_af2.png" width="800px"/>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		
+		<h4>Extra Credit: \(\sqrt{3}\)-Subdivision</h4>
+
+		<p>I chose to also implement \(\sqrt{3}\)-Subdivision. This involved modifying 
+			<code>halfEdgeMesh.h</code> to include a new method called <code>splitFace</code>, 
+			which splits a face into three at its centroid, as well as adding the fields
+			<code>newPosition</code> and <code>isNew</code> to the <code>Face</code> class
+			to support this new subdivision. I've also added more
+			code to <code>MeshResampler::upsample</code> so that I can switch between
+			Loop and \(\sqrt{3}\)-Subdivision using a <code>boolean</code> and an <code>if</code> statement.
+		</p>
+
+		<p>The implementation is based off of what is described in this paper:
+			<br>
+			<a href=https://www.graphics.rwth-aachen.de/media/papers/sqrt31.pdf>graphics.rwth-aachen.de/media/papers/sqrt31.pdf</a>
+		</p>
+		
+		<h5>Quick Overview of \(\sqrt{3}\)-Subdivision</h5>
+
+		<p>The paper linked above does a better job going into detail and includes a helpful diagram which
+			I've screenshotted below. Essentially, the algorithm first splits all faces in the mesh,
+			inserting a vertex at its centroid. Secondly, the algorithm flips all original edges in the mesh,
+			excluding boundary edges. This results in the final subdivision.
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/sqrt3subdiv.png" width="800px"/>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<h5>Implementing \(\sqrt{3}\)-Subdivision</h5>
+
+		<p>To implement this, I built off of the implementation for Loop subdivision since
+			\(\sqrt{3}\)-Subdivision uses a very similar process. As such, I needed to make a function
+			to help split faces instead of edges, which resulted in <code>HalfedgeMesh::splitFace</code>.
+			I used the same principles that I stuck to when implementing <code>HalfedgeMesh::splitEdge</code>,
+			such as collecting all elements (except the original edges), creating new elements, and
+			lastly updating all the elements appropriately. A few differences I would like to point out are:
+
+			<ul>
+				<li>We only need to split in the case that the given face is not a boundary face as
+					there is no purpose in splitting a boundary face.
+				</li>
+				<li>The new vertex's position is calculated using by simply averaging the three vertices
+					of the face, as this is the formula for the centroid of a face.
+				</li>
+				<li>In addition to noting when edges are new by setting <code>isNew</code>, I also note when faces are new with their
+					<code>isNew</code> field as to avoid
+					continously splitting faces which were results of subdividing an old face.
+				</li>
+			</ul>
+		</p>
+
+		<p>Once <code>HalfedgeMesh::splitFace</code> was implemented, I created the case that uses
+			\(\sqrt{3}\)-Subdivision in <code>MeshResampler::upsample</code>. Much like Loop, there are
+			the five steps (sections): old vertices, new vertices, split, flip, and set.
+		</p>
+
+		<p>The overall logic for old vertices remains identical, such as summing up neighbors and setting the
+			<code>newPosition</code> and <code>isNew = false</code> fields for all old vertices. The only difference is in the formula for
+			the position, which is now \((1 - u)v + u\frac{k}{n}\), where \(n =\) the degree of
+			the vertex position, \(u = \frac{4 - 2\cos(\frac{2\pi}{n})}{9}\), \(v =\) the vertex, and \(k =\) the sum of all
+			the positions of neighboring vertices. All these formulas come directly from the paper linked above.
+			The boundary vertex case remains the same.
+		</p>
+
+		<p>The logic for new vertices is much simpler than Loop, as all I needed to do was iterate through
+			every face and set <code>newPosition</code> as the centroid of the face. We can traverse to all
+			three vertices of the face using half-edges and from there average their positions to achieve the centroid.
+			There is also no need to check for boundary faces as the iteration excludes them naturally. 
+			Additionally, I set <code>isNew</code> for each face to be <code>false</code> in preparation for the splitting
+			phase.
+		</p>
+
+		<p>Before splitting, I need to also iterate through every edge in the mesh and set <code>isNew = false</code>.
+			Once splitting occurs, we need to be able to differentiate between old edges and new edges to perform the flipping.
+		</p>
+
+		<p>Splitting works the same as it does for Loop subdivision with the difference being faces instead edges being split.
+			I iterate through every face in the mesh and check if it's an old face using <code>isNew</code>. If it is,
+			I call <code>splitFace</code> and set the <code>newPosition</code> and <code>isNew</code> fields to the face's <code>newPosition</code>
+			and <code>true</code> respectively, just like in Loop.
+		</p>
+
+		<p>Flipping is much simpler as well as all we need to do is iterate through all edges in the mesh 
+			and check <code>isNew</code>. If it is <code>false</code>, a.k.a. an old edge, we can call
+			<code>flipEdge</code> on it.
+		</p>
+		
+		<p>Finally, we set the vertices to their correct positions, which is identical to Loop subdivision.</p>
+		
+		<h4>Differences Between Loop and \(\sqrt{3}\)</h4>
+
+		<p>With both subdivision schemes implemented, we can compare the two below. Attached below
+			are a few screenshots comparing them:
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<b>Screenshots of dae/beetle.dae through Loop and \(\sqrt{3}\)-Subdivision</b>
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/loop_v_sqrt3_b4.png" width="800px"/>
+				  <figcaption>Before subdivision</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<div>
+			<table>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/loop_af1.png" width="400px"/>
+				  <figcaption>After one Loop subdivision</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part6/sqrt3_af1.png" width="400px"/>
+				  <figcaption>After one \(\sqrt{3}\)-subdivision</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="assets/part6/loop_af2.png" width="400px"/>
+				  <figcaption>After two Loop subdivisions</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="assets/part6/sqrt3_af2.png" width="400px"/>
+				  <figcaption>After two \(\sqrt{3}\)-subdivisions</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<p>One main difference I observe between both subdivision schemes is that Loop appears to
+			reach smaller triangles in fewer subdivisions than \(\sqrt{3}\)-subdivision. This makes sense
+			given that Loop splits triangles faces into fours while \(\sqrt{3}\)-subdivision splits
+			triangle faces into threes. Another difference is between how both handle boundaries.
+			Faces along the boundary are subdivided the same as interior faces in Loop subdivision.
+			In \(\sqrt{3}\)-subdivision however, the edges along the boundary remain the same,
+			resulting in "stretched" faces along the boundaries.
+		</p>
+
 		</div>
 	</body>
 </html>
