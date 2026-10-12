@@ -47,7 +47,7 @@
 		<p>In this homework, I implemented the logic behind building Bezier curves and surfaces to make 3D triangle meshes.
 			I've also implemented the logic for basic mesh operations such as flipping and splitting edges, which led to
 			the implementation of loop subdivision. For extra credit, I've also created a new operation to split faces
-			for the purpose of implementing sqrt-3 subdivision. By far the most interesting thing about working on this assignment
+			for the purpose of implementing \(\sqrt{3}\)-subdivision. By far the most interesting thing about working on this assignment
 			was the use of the half-edge data structure to traverse the entire mesh. After messing around a bit, I
 			figured out a pattern to ensure that the mesh operations correctly assigned pointers which involved
 			making a diagram, obtaining all the elements, creating new elements, and reassigning them last. It was
@@ -347,46 +347,49 @@
 			The fifth section, set, simply sets every vertex's position to their <code>newPosition</code>.
 		</p>
 
-		<p>To handle old vertices, I simply iterate through all vertices in the mesh. If it is not a boundary vertex,
-			I can calculate its new position with the equation \((1 - nu)v + uk\), where \(n =\) the degree of
-			the vertex, \(u = \frac{3}{8n}\) if \(n \neq 3\), else \(u = \frac{3}{16}\), \(v =\) the vertex position, and \(k =\) the sum of all
-			the positions of neighboring vertices. I chose \(u\) using a ternary operator on the condition \(n == 3\), picking the
-			appropriate value depending on the outcome. To obtain \(k\), we simply use the same half-edge iteration described in
-			Part 3 to reach every half-edge that comes from the vertex which in turn lets us also reach every half-edge
-			pointing towards the vertex through twins. The vertices of these twins are therefore neighboring vertices,
-			which we can sum up the position of to obtain \(k\) and fully compute the new position for every old vertex in the mesh.
-			This gets stored in each vertex's <code>newPosition</code> field.
-			Lastly, we mark all these vertices as old by setting their <code>isNew</code> field to <code>false</code>.
-		</p>
-
-		<p>To handle new vertices, I iterate through all edges in the mesh. If it is not a boundary edge, I can use the equation
-			\(\frac{3}{8}(v0 + v1) + \frac{1}{8}(v2 + v3)\). \(v0\) and \(v1\) are the vertices of the edge, while \(v2\) and \(v3\) are
-			the "opposite" vertices, meaning that they are the vertices connected to the two faces of the triangles 
-			that are not connected to their shared edge, a.k.a. the edge we'd be finding the vertex's position of after subdivision.
-			All these vertices can simply be found through half-edge traversal, more specifically through the edge's half-edges
-			which each can traverse around two faces. After computing with the formula, we store it in the edge's 
-			<code>newPosition</code> field.
-		</p>
-
-		<p>Splitting is relatively simple. For Loop subdivision, we want to split edges in the original mesh, which means
-			all edges whose two vertices are not new, a.k.a. when <code>isNew</code> is <code>false</code>.
-			I iterate through all edges in the mesh (safely using a while loop and storing the next edge)
-			and simply obtain the vertices of each edge. If both are old, we split the edge and set this new vertex's fields.
-			The <code>newPosition</code> field will match the <code>newPosition</code> field of the edge and <code>isNew</code>
-			is set to <code>true</code>. Since we also create new edges, we need to mark them as being old or new for flipping later.
-			I chose to modify the <code>splitEdge</code> method to set the fields for the edges during the updates.
-		</p>
-
-		<p>Flipping is also simple as we just need to check if the edge we flip is new and if its vertices are an old and new one.
-			Much like splitting, I iterate through all edges in the mesh (safely) and check if the edge's <code>isNew</code> field
-			is <code>true</code>. To check if both vertices are a new and old vertex respectively, we can simply
-			compare their <code>isNew</code> fields using <code>!=</code>, which returns <code>true</code> if both are different.
-			If the conditions pass, we flip the edge and do the same checks for all edges.
-		</p>
-
-		<p>Setting the positions is the easiest section since all I needed to do was iterate through every vertex
-			and set its <code>position</code> to <code>newPosition</code>.
-		</p>
+		<ol>
+			<li>To handle old vertices, I simply iterate through all vertices in the mesh. If it is not a boundary vertex,
+				I can calculate its new position with the equation \((1 - nu)v + uk\), where \(n =\) the degree of
+				the vertex, \(u = \frac{3}{8n}\) if \(n \neq 3\), else \(u = \frac{3}{16}\), \(v =\) the vertex position, and \(k =\) the sum of all
+				the positions of neighboring vertices. I chose \(u\) using a ternary operator on the condition \(n == 3\), picking the
+				appropriate value depending on the outcome. To obtain \(k\), we simply use the same half-edge iteration described in
+				Part 3 to reach every half-edge that comes from the vertex which in turn lets us also reach every half-edge
+				pointing towards the vertex through twins. The vertices of these twins are therefore neighboring vertices,
+				which we can sum up the position of to obtain \(k\) and fully compute the new position for every old vertex in the mesh.
+				This gets stored in each vertex's <code>newPosition</code> field.
+				Lastly, we mark all these vertices as old by setting their <code>isNew</code> field to <code>false</code>.
+			</li>
+			<br>
+			<li>To handle new vertices, I iterate through all edges in the mesh. If it is not a boundary edge, I can use the equation
+				\(\frac{3}{8}(v0 + v1) + \frac{1}{8}(v2 + v3)\). \(v0\) and \(v1\) are the vertices of the edge, while \(v2\) and \(v3\) are
+				the "opposite" vertices, meaning that they are the vertices connected to the two faces of the triangles 
+				that are not connected to their shared edge, a.k.a. the edge we'd be finding the vertex's position of after subdivision.
+				All these vertices can simply be found through half-edge traversal, more specifically through the edge's half-edges
+				which each can traverse around two faces. After computing with the formula, we store it in the edge's 
+				<code>newPosition</code> field.
+			</li>
+			<br>
+			<li>Splitting is relatively simple. For Loop subdivision, we want to split edges in the original mesh, which means
+				all edges whose two vertices are not new, a.k.a. when <code>isNew</code> is <code>false</code>.
+				I iterate through all edges in the mesh (safely using a while loop and storing the next edge)
+				and simply obtain the vertices of each edge. If both are old, we split the edge and set this new vertex's fields.
+				The <code>newPosition</code> field will match the <code>newPosition</code> field of the edge and <code>isNew</code>
+				is set to <code>true</code>. Since we also create new edges, we need to mark them as being old or new for flipping later.
+				I chose to modify the <code>splitEdge</code> method to set the fields for the edges during the updates.
+			</li>
+			<br>
+			<li>Flipping is also simple as we just need to check if the edge we flip is new and if its vertices are an old and new one.
+				Much like splitting, I iterate through all edges in the mesh (safely) and check if the edge's <code>isNew</code> field
+				is <code>true</code>. To check if both vertices are a new and old vertex respectively, we can simply
+				compare their <code>isNew</code> fields using <code>!=</code>, which returns <code>true</code> if both are different.
+				If the conditions pass, we flip the edge and do the same checks for all edges.
+			</li>
+			<br>
+			<li>Setting the positions is the easiest section since all I needed to do was iterate through every vertex
+				and set its <code>position</code> to <code>newPosition</code>.
+			</li>
+		</ol>
+		
 		
 		<h4>Mesh Behavior Post-Loop</h4>
 
@@ -431,18 +434,18 @@
 		</p>
 
 		<div style="display: flex; flex-direction: column; align-items: center;">
-			<b>Screenshots of unaltered dae/cube.dae through multiple Loop subdivisions</b>
-			<br>
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<b>Screenshots of unaltered dae/cube.dae through multiple Loop subdivisions</b>
+				<br>
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="assets/part6/cube_n1.png" width="400px"/>
+				  <img src="assets/part6/cube_n1.png" width="250px"/>
 				</td>
 				<td style="text-align: center;">
-				  <img src="assets/part6/cube_n2.png" width="400px"/>
+				  <img src="assets/part6/cube_n2.png" width="250px"/>
 				</td>
 				<td style="text-align: center;">
-				  <img src="assets/part6/cube_n3.png" width="400px"/>
+				  <img src="assets/part6/cube_n3.png" width="250px"/>
 				</td>
 			  </tr>
 			</table>
@@ -451,22 +454,22 @@
 		<p>I found that splitting every diagonal edge of the cube so that there is an X pattern
 			on each side prevents this since it ensures each vertex is connected to all neighbors,
 			including its diagonal neighbor. Since the cube is symmetric, this means every vertex will
-			have the same "weighing" which makes the cube subdivide symmtrically.
+			have the same "weighing" which makes the cube subdivide symmetrically.
 		</p>
 
 		<div style="display: flex; flex-direction: column; align-items: center;">
-			<b>Screenshots of altered dae/cube.dae through multiple Loop subdivisions</b>
-			<br>
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<b>Screenshots of altered dae/cube.dae through multiple Loop subdivisions</b>
+				<br>	
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="assets/part6/cube_a1.png" width="400px"/>
+				  <img src="assets/part6/cube_a1.png" width="250px"/>
 				</td>
 				<td style="text-align: center;">
-				  <img src="assets/part6/cube_a2.png" width="400px"/>
+				  <img src="assets/part6/cube_a2.png" width="250px"/>
 				</td>
 				<td style="text-align: center;">
-				  <img src="assets/part6/cube_a3.png" width="400px"/>
+				  <img src="assets/part6/cube_a3.png" width="250px"/>
 				</td>
 			  </tr>
 			</table>
@@ -482,28 +485,31 @@
 			<a href="https://graphics.stanford.edu/~mdfisher/subdivision.html">graphics.stanford.edu/~mdfisher/subdivision.html</a>
 		</p>
 
-		<p>To account for old boundary vertices, we need to use the alternative formula
-			\(\frac{3}{4}v + \frac{1}{8}(v0 + v1)\), where \(v = \) the vertex we are examining and
-			\(v0, v1\) are neighboring boundary vertices. The trickiest part of this case is finding the neighboring
-			boundary vertices. To find them, I iterated with half-edges, starting from the half-edge of \(v\), until I reached a half-edge that is a boundary.
-			In this particular case, there only exists one half-edge like this that comes from \(v\).
-			I can use this as a point of reference to traverse and obtain \(v0, v1\).
-			Once we find all the vertices we need, I compute the <code>newPosition</code> for boundary vertex \(v\).
-		</p>
-
-		<p>For new vertices, in the case that our edge is on the boundary, we can simply just
-			use the edge's midpoint as the <code>newPosition</code> for the vertex. This is just the average between
-			the two vertices of the edge, something that we've done in Part 5.
-		</p>
+		<ol>
+			<li>To account for old boundary vertices, we need to use the alternative formula
+				\(\frac{3}{4}v + \frac{1}{8}(v0 + v1)\), where \(v = \) the vertex we are examining and
+				\(v0, v1\) are neighboring boundary vertices. The trickiest part of this case is finding the neighboring
+				boundary vertices. To find them, I iterated with half-edges, starting from the half-edge of \(v\), until I reached a half-edge that is a boundary.
+				In this particular case, there only exists one half-edge like this that comes from \(v\).
+				I can use this as a point of reference to traverse and obtain \(v0, v1\).
+				Once we find all the vertices we need, I compute the <code>newPosition</code> for boundary vertex \(v\).
+			</li>
+			<br>
+			<li>For new vertices, in the case that our edge is on the boundary, we can simply just
+				use the edge's midpoint as the <code>newPosition</code> for the vertex. This is just the average between
+				the two vertices of the edge, something that we've done in Part 5.
+			</li>
+		</ol>
+		
 
 		<p>Now that we've made sure boundary vertices will have a <code>newPosition</code>, Loop subdivision
 			can support meshes with boundaries.
 		</p>
 
 		<div style="display: flex; flex-direction: column; align-items: center;">
-			<b>Screenshots of dae/beetle.dae through multiple Loop subdivisions</b>
-			<br>
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<b>Screenshots of dae/beetle.dae through multiple Loop subdivisions</b>
+				<br>
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="assets/part6/beetle_b4.png" width="800px"/>
@@ -569,9 +575,11 @@
 				<li>We only need to split in the case that the given face is not a boundary face as
 					there is no purpose in splitting a boundary face.
 				</li>
+				<br>
 				<li>The new vertex's position is calculated using by simply averaging the three vertices
 					of the face, as this is the formula for the centroid of a face.
 				</li>
+				<br>
 				<li>In addition to noting when edges are new by setting <code>isNew</code>, I also note when faces are new with their
 					<code>isNew</code> field as to avoid
 					continously splitting faces which were results of subdividing an old face.
@@ -584,38 +592,41 @@
 			the five steps (sections): old vertices, new vertices, split, flip, and set.
 		</p>
 
-		<p>The overall logic for old vertices remains identical, such as summing up neighbors and setting the
-			<code>newPosition</code> and <code>isNew = false</code> fields for all old vertices. The only difference is in the formula for
-			the position, which is now \((1 - u)v + u\frac{k}{n}\), where \(n =\) the degree of
-			the vertex position, \(u = \frac{4 - 2\cos(\frac{2\pi}{n})}{9}\), \(v =\) the vertex, and \(k =\) the sum of all
-			the positions of neighboring vertices. All these formulas come directly from the paper linked above.
-			The boundary vertex case remains the same.
-		</p>
-
-		<p>The logic for new vertices is much simpler than Loop, as all I needed to do was iterate through
-			every face and set <code>newPosition</code> as the centroid of the face. We can traverse to all
-			three vertices of the face using half-edges and from there average their positions to achieve the centroid.
-			There is also no need to check for boundary faces as the iteration excludes them naturally. 
-			Additionally, I set <code>isNew</code> for each face to be <code>false</code> in preparation for the splitting
-			phase.
-		</p>
-
-		<p>Before splitting, I need to also iterate through every edge in the mesh and set <code>isNew = false</code>.
-			Once splitting occurs, we need to be able to differentiate between old edges and new edges to perform the flipping.
-		</p>
-
-		<p>Splitting works the same as it does for Loop subdivision with the difference being faces instead edges being split.
-			I iterate through every face in the mesh and check if it's an old face using <code>isNew</code>. If it is,
-			I call <code>splitFace</code> and set the <code>newPosition</code> and <code>isNew</code> fields to the face's <code>newPosition</code>
-			and <code>true</code> respectively, just like in Loop.
-		</p>
-
-		<p>Flipping is much simpler as well as all we need to do is iterate through all edges in the mesh 
-			and check <code>isNew</code>. If it is <code>false</code>, a.k.a. an old edge, we can call
-			<code>flipEdge</code> on it.
-		</p>
+		<ol>
+			<li>The overall logic for old vertices remains identical, such as summing up neighbors and setting the
+				<code>newPosition</code> and <code>isNew = false</code> fields for all old vertices. The only difference is in the formula for
+				the position, which is now \((1 - u)v + u\frac{k}{n}\), where \(n =\) the degree of
+				the vertex position, \(u = \frac{4 - 2\cos(\frac{2\pi}{n})}{9}\), \(v =\) the vertex, and \(k =\) the sum of all
+				the positions of neighboring vertices. All these formulas come directly from the paper linked above.
+				The boundary vertex case remains the same.
+			</li>
+			<br>
+			<li>The logic for new vertices is much simpler than Loop, as all I needed to do was iterate through
+				every face and set <code>newPosition</code> as the centroid of the face. We can traverse to all
+				three vertices of the face using half-edges and from there average their positions to achieve the centroid.
+				There is also no need to check for boundary faces as the iteration excludes them naturally. 
+				Additionally, I set <code>isNew</code> for each face to be <code>false</code> in preparation for the splitting
+				phase.
+			</li>
+			<br>
+			<li>Before splitting, I need to also iterate through every edge in the mesh and set <code>isNew = false</code>.
+				Once splitting occurs, we need to be able to differentiate between old edges and new edges to perform the flipping.
+			</li>
+			<br>
+			<li>Splitting works the same as it does for Loop subdivision with the difference being faces instead edges being split.
+				I iterate through every face in the mesh and check if it's an old face using <code>isNew</code>. If it is,
+				I call <code>splitFace</code> and set the <code>newPosition</code> and <code>isNew</code> fields to the face's <code>newPosition</code>
+				and <code>true</code> respectively, just like in Loop.
+			</li>
+			<br>
+			<li>Flipping is much simpler as well as all we need to do is iterate through all edges in the mesh 
+				and check <code>isNew</code>. If it is <code>false</code>, a.k.a. an old edge, we can call
+				<code>flipEdge</code> on it.
+			</li>
+			<br>
+			<li>Finally, we set the vertices to their correct positions, which is identical to Loop subdivision.</li>
+		</ol>
 		
-		<p>Finally, we set the vertices to their correct positions, which is identical to Loop subdivision.</p>
 		
 		<h4>Differences Between Loop and \(\sqrt{3}\)</h4>
 
@@ -624,9 +635,9 @@
 		</p>
 
 		<div style="display: flex; flex-direction: column; align-items: center;">
-			<b>Screenshots of dae/beetle.dae through Loop and \(\sqrt{3}\)-Subdivision</b>
-			<br>
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<b>Screenshots of dae/beetle.dae through Loop and \(\sqrt{3}\)-Subdivision</b>
+				<br>
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="assets/part6/loop_v_sqrt3_b4.png" width="800px"/>
@@ -636,7 +647,7 @@
 			</table>
 		</div>
 
-		<div>
+		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table>
 			  <tr>
 				<td style="text-align: center;">
